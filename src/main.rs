@@ -1,5 +1,5 @@
 use itertools::Itertools;
-use std::str::Chars;
+use std::{str::Chars, collections::LinkedList, error::Error};
 
 #[derive(Debug, PartialEq)]
 enum Token {
@@ -11,6 +11,26 @@ enum Token {
     Dot,
     Number(f32),
 }
+
+#[derive(Debug)]
+enum Exp {
+    Number(f32),
+    // Function(fn (&LinkedList<Exp>) -> Result<Exp, String>),
+    Add,
+    Subtract,
+    Multiply,
+    List(LinkedList<Exp>)
+}
+
+// fn add(args: &LinkedList<Exp>) -> Result<Exp, String> {
+//     Ok(Exp::Number(1.0))
+// }
+// fn subtract(args: &LinkedList<Exp>) -> Result<Exp, String> {
+//     Ok(Exp::Number(1.0))
+// }
+// fn multiply(args: &LinkedList<Exp>) -> Result<Exp, String> {
+//     Ok(Exp::Number(1.0))
+// }
 
 fn tokenize_num(current_char: char, iter: &mut itertools::MultiPeek<Chars>) -> Result<Token, String> {
     iter.reset_peek();
@@ -93,9 +113,49 @@ fn tokenize(text: &str) -> Result<Vec<Token>, String> {
     Ok(result)
 }
 
-fn main() {
-    let out = tokenize(" ( *   (-.3  6) .7 )  ");
-    println!("{:?}", out);
-    let out = tokenize("(+(* 2 3)1)");
-    println!("{:?}", out);
+fn parse(tokens: &[Token]) -> Result<Exp, String> {
+    let first = tokens.first().ok_or("Error while parsing".to_owned())?;
+    match first {
+        Token::Number(n) => Ok(Exp::Number(*n)),
+        // Token::Plus => Ok(Exp::Function(add)),
+        // Token::Minus => Ok(Exp::Function(subtract)),
+        // Token::Star => Ok(Exp::Function(multiply)),
+        Token::Plus => Ok(Exp::Add),
+        Token::Minus => Ok(Exp::Subtract),
+        Token::Star => Ok(Exp::Multiply),
+        Token::OpenParen => {
+            let mut idx = 1;
+            let mut list = LinkedList::<Exp>::new();
+            while idx < tokens.len() - 1 {
+                let subslice = if tokens[idx] == Token::OpenParen {
+                    let begin = idx;
+                    while tokens[idx] != Token::CloseParen {
+                        idx += 1;
+                    }
+                    &tokens[begin..idx + 1]
+                }
+                else {
+                    &tokens[idx..idx + 1]
+                };
+                list.push_back(parse(subslice)?);
+                idx += 1;
+            }
+            match tokens.last() {
+                Some(token) if *token == Token::CloseParen => Ok(Exp::List(list)),
+                _ => Err("Error while parsing".to_owned())
+            }
+        }
+        _ => Err("Error while parsing".to_owned())
+    }
+}
+
+fn main() -> Result<(), Box<dyn Error>> {
+    // let input = "(+(* 2 3)1)";
+    let input = " ( *   (+ -.3  6) 21.7 )  ";
+    println!("Input: {}\n", input);
+    let tokens = tokenize(input)?;
+    println!("Token stream: {:?}\n", tokens);
+    let ast = parse(&tokens)?;
+    println!("Parse tree: {:?}", ast);
+    Ok(())
 }
