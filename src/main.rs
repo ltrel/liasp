@@ -1,6 +1,6 @@
 use itertools::Itertools;
 use core::fmt;
-use std::{str::Chars, collections::LinkedList, error::Error};
+use std::{str::Chars, collections::LinkedList, error::Error, io::{self, Write}};
 
 #[derive(Debug, PartialEq)]
 enum Token {
@@ -25,6 +25,19 @@ impl fmt::Debug for Exp {
             Exp::Number(val) => write!(f, "Number({:?})", val),
             Exp::Function(_val) => write!(f, "Function"),
             Exp::List(val) => write!(f, "List({:?})", val),
+        }
+    }
+}
+
+impl fmt::Display for Exp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Exp::Number(val) => write!(f, "{}", val),
+            Exp::Function(_val) => write!(f, "#function#"),
+            Exp::List(list) => {
+                let body = list.iter().map(|x| format!("{}", x)).collect::<Vec<String>>().join(" ");
+                write!(f, "({})", body)
+            },
         }
     }
 }
@@ -192,13 +205,25 @@ fn eval(exp: Exp) -> Result<Exp, String> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     // let input = "(+(* 2 3)1)";
-    let input = " ( *   (+ -.3  6) 21.7 )  ";
-    println!("Input: {}\n", input);
-    let tokens = tokenize(input)?;
-    println!("Token stream: {:?}\n", tokens);
-    let ast = parse(&tokens)?;
-    println!("Parse tree: {:?}", ast);
-    let res = eval(ast)?;
-    println!("Result: {:?}", res);
-    Ok(())
+    // let input = " ( *   (+ -.3  6) 21.7 )  ";
+    // println!("Input: {}\n", input);
+    // let tokens = tokenize(input)?;
+    // println!("Token stream: {:?}\n", tokens);
+    // let ast = parse(&tokens)?;
+    // println!("Parse tree: {:?}", ast);
+    // let res = eval(ast)?;
+    // println!("Result: {:?}", res);
+
+    loop {
+        print!("> ");
+        io::stdout().flush().expect("stdout flush failed");
+        let mut input = String::new();
+        io::stdin().read_line(&mut input).expect("stdin readline failed");
+         
+        let output = tokenize(&input).and_then(|tokens| parse(&tokens)).and_then(|ast| eval(ast));
+        match output {
+            Ok(val) => println!("{}", val),
+            _ => println!("Error"),
+        }
+    }
 }
