@@ -1,4 +1,5 @@
 use itertools::Itertools;
+use core::fmt;
 use std::{str::Chars, collections::LinkedList, error::Error};
 
 #[derive(Debug, PartialEq)]
@@ -12,25 +13,52 @@ enum Token {
     Number(f32),
 }
 
-#[derive(Debug)]
 enum Exp {
     Number(f32),
-    // Function(fn (&LinkedList<Exp>) -> Result<Exp, String>),
-    Add,
-    Subtract,
-    Multiply,
+    Function(fn (&LinkedList<Exp>) -> Result<Exp, String>),
     List(LinkedList<Exp>)
 }
 
-// fn add(args: &LinkedList<Exp>) -> Result<Exp, String> {
-//     Ok(Exp::Number(1.0))
-// }
-// fn subtract(args: &LinkedList<Exp>) -> Result<Exp, String> {
-//     Ok(Exp::Number(1.0))
-// }
-// fn multiply(args: &LinkedList<Exp>) -> Result<Exp, String> {
-//     Ok(Exp::Number(1.0))
-// }
+impl fmt::Debug for Exp {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match self {
+            Exp::Number(val) => write!(f, "Number({:?})", val),
+            Exp::Function(_val) => write!(f, "Function"),
+            Exp::List(val) => write!(f, "List({:?})", val),
+        }
+    }
+}
+
+fn add(args: &LinkedList<Exp>) -> Result<Exp, String> {
+    let mut sum = 0.0;
+    for arg in args.iter() {
+        match arg {
+            Exp::Number(val) => sum += val,
+            _ => return Err("Type error".to_owned()),
+        }
+    }
+    Ok(Exp::Number(sum))
+}
+fn subtract(args: &LinkedList<Exp>) -> Result<Exp, String> {
+    let mut sum = 0.0;
+    for arg in args.iter() {
+        match arg {
+            Exp::Number(val) => sum -= val,
+            _ => return Err("Type error".to_owned()),
+        }
+    }
+    Ok(Exp::Number(sum))
+}
+fn multiply(args: &LinkedList<Exp>) -> Result<Exp, String> {
+    let mut product = 1.0;
+    for arg in args.iter() {
+        match arg {
+            Exp::Number(val) => product *= val,
+            _ => return Err("Type error".to_owned()),
+        }
+    }
+    Ok(Exp::Number(product))
+}
 
 fn tokenize_num(current_char: char, iter: &mut itertools::MultiPeek<Chars>) -> Result<Token, String> {
     iter.reset_peek();
@@ -117,12 +145,9 @@ fn parse(tokens: &[Token]) -> Result<Exp, String> {
     let first = tokens.first().ok_or("Error while parsing".to_owned())?;
     match first {
         Token::Number(n) => Ok(Exp::Number(*n)),
-        // Token::Plus => Ok(Exp::Function(add)),
-        // Token::Minus => Ok(Exp::Function(subtract)),
-        // Token::Star => Ok(Exp::Function(multiply)),
-        Token::Plus => Ok(Exp::Add),
-        Token::Minus => Ok(Exp::Subtract),
-        Token::Star => Ok(Exp::Multiply),
+        Token::Plus => Ok(Exp::Function(add)),
+        Token::Minus => Ok(Exp::Function(subtract)),
+        Token::Star => Ok(Exp::Function(multiply)),
         Token::OpenParen => {
             let mut idx = 1;
             let mut list = LinkedList::<Exp>::new();
@@ -149,6 +174,22 @@ fn parse(tokens: &[Token]) -> Result<Exp, String> {
     }
 }
 
+fn eval(exp: Exp) -> Result<Exp, String> {
+    if let Exp::List(mut list) = exp {
+        let first = list.pop_front().ok_or("Error while evaluating".to_owned())?;
+        match first {
+            Exp::Function(f) => {
+                let evaulated_args = list.into_iter().map(|x| eval(x)).collect::<Result<LinkedList<Exp>, String>>()?;
+                f(&evaulated_args)
+            },
+            _ => Err("Error while evaluating".to_owned()),
+        }
+    }
+    else {
+        Ok(exp)
+    }
+}
+
 fn main() -> Result<(), Box<dyn Error>> {
     // let input = "(+(* 2 3)1)";
     let input = " ( *   (+ -.3  6) 21.7 )  ";
@@ -157,5 +198,7 @@ fn main() -> Result<(), Box<dyn Error>> {
     println!("Token stream: {:?}\n", tokens);
     let ast = parse(&tokens)?;
     println!("Parse tree: {:?}", ast);
+    let res = eval(ast)?;
+    println!("Result: {:?}", res);
     Ok(())
 }
