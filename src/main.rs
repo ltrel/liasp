@@ -1,6 +1,11 @@
-use itertools::Itertools;
 use core::fmt;
-use std::{str::Chars, collections::LinkedList, error::Error, io::{self, Write}};
+use itertools::Itertools;
+use std::{
+    collections::LinkedList,
+    error::Error,
+    io::{self, Write},
+    str::Chars,
+};
 
 #[derive(Debug, PartialEq)]
 enum Token {
@@ -15,8 +20,8 @@ enum Token {
 
 enum Exp {
     Number(f32),
-    Function(fn (&LinkedList<Exp>) -> Result<Exp, String>),
-    List(LinkedList<Exp>)
+    Function(fn(&LinkedList<Exp>) -> Result<Exp, String>),
+    List(LinkedList<Exp>),
 }
 
 impl fmt::Debug for Exp {
@@ -35,9 +40,13 @@ impl fmt::Display for Exp {
             Exp::Number(val) => write!(f, "{}", val),
             Exp::Function(_val) => write!(f, "#function#"),
             Exp::List(list) => {
-                let body = list.iter().map(|x| format!("{}", x)).collect::<Vec<String>>().join(" ");
+                let body = list
+                    .iter()
+                    .map(|x| format!("{}", x))
+                    .collect::<Vec<String>>()
+                    .join(" ");
                 write!(f, "({})", body)
-            },
+            }
         }
     }
 }
@@ -73,29 +82,41 @@ fn multiply(args: &LinkedList<Exp>) -> Result<Exp, String> {
     Ok(Exp::Number(product))
 }
 
-fn tokenize_num(current_char: char, iter: &mut itertools::MultiPeek<Chars>) -> Result<Token, String> {
+fn tokenize_num(
+    current_char: char,
+    iter: &mut itertools::MultiPeek<Chars>,
+) -> Result<Token, String> {
     iter.reset_peek();
     let mut digits = current_char.to_string();
-    digits.push_str(&iter.take_while_ref(|c| c.is_digit(10)).collect::<String>());
+    digits.push_str(
+        &iter
+            .take_while_ref(|c| c.is_ascii_digit())
+            .collect::<String>(),
+    );
 
     // If we didn't start with a decimal point
     if current_char != '.' {
-        match iter.peek() {
-            // Did we end on a decimal point followed by more digits?
-            Some('.') => match iter.peek() {
-                Some(c) if c.is_digit(10) => {
+        // Did we end on a decimal point followed by more digits?
+        if let Some('.') = iter.peek() {
+            match iter.peek() {
+                Some(c) if c.is_ascii_digit() => {
                     digits.push('.');
                     iter.next();
-                    digits.push_str(&iter.take_while_ref(|c| c.is_digit(10)).collect::<String>())
+                    let rest = iter
+                        .take_while_ref(|c| c.is_ascii_digit())
+                        .collect::<String>();
+                    digits.push_str(&rest)
                 }
                 _ => (),
-            },
-            _ => (),
+            }
         }
     }
     iter.reset_peek();
 
-    digits.parse::<f32>().map(|x| Token::Number(x)).map_err(|_| "Number parsing error".to_owned())
+    digits
+        .parse::<f32>()
+        .map(Token::Number)
+        .map_err(|_| "Number parsing error".to_owned())
 }
 
 fn consume_whitespace(iter: &mut itertools::MultiPeek<Chars>) -> usize {
@@ -112,26 +133,26 @@ fn tokenize(text: &str) -> Result<Vec<Token>, String> {
             '(' => {
                 consume_whitespace(&mut iter);
                 Some(Token::OpenParen)
-            },
+            }
             ')' => {
                 consume_whitespace(&mut iter);
                 Some(Token::CloseParen)
-            },
+            }
             '+' => Some(Token::Plus),
             '-' => match iter.peek() {
-                Some(peeked) if peeked.is_digit(10) => Some(tokenize_num('-', &mut iter)?),
+                Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('-', &mut iter)?),
                 Some(peeked) if *peeked == '.' => match iter.peek() {
-                    Some(peeked) if peeked.is_digit(10) => Some(tokenize_num('-', &mut iter)?),
+                    Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('-', &mut iter)?),
                     _ => Some(Token::Minus),
-                }
+                },
                 _ => Some(Token::Minus),
             },
             '*' => Some(Token::Star),
             '.' => match iter.peek() {
-                Some(peeked) if peeked.is_digit(10) => Some(tokenize_num('.', &mut iter)?),
+                Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('.', &mut iter)?),
                 _ => Some(Token::Dot),
             },
-            c if c.is_digit(10) => Some(tokenize_num(c, &mut iter)?),
+            c if c.is_ascii_digit() => Some(tokenize_num(c, &mut iter)?),
             _ if c.is_whitespace() => None,
             _ => return Err("Error while tokenizing".to_owned()),
         };
@@ -143,7 +164,7 @@ fn tokenize(text: &str) -> Result<Vec<Token>, String> {
                         if consume_whitespace(&mut iter) < 1 {
                             return Err("Error while tokenizing".to_owned());
                         }
-                    },
+                    }
                     _ => (),
                 }
                 iter.reset_peek();
@@ -171,8 +192,7 @@ fn parse(tokens: &[Token]) -> Result<Exp, String> {
                         idx += 1;
                     }
                     &tokens[begin..idx + 1]
-                }
-                else {
+                } else {
                     &tokens[idx..idx + 1]
                 };
                 list.push_back(parse(subslice)?);
@@ -180,25 +200,29 @@ fn parse(tokens: &[Token]) -> Result<Exp, String> {
             }
             match tokens.last() {
                 Some(token) if *token == Token::CloseParen => Ok(Exp::List(list)),
-                _ => Err("Error while parsing".to_owned())
+                _ => Err("Error while parsing".to_owned()),
             }
         }
-        _ => Err("Error while parsing".to_owned())
+        _ => Err("Error while parsing".to_owned()),
     }
 }
 
 fn eval(exp: Exp) -> Result<Exp, String> {
     if let Exp::List(mut list) = exp {
-        let first = list.pop_front().ok_or("Error while evaluating".to_owned())?;
+        let first = list
+            .pop_front()
+            .ok_or("Error while evaluating".to_owned())?;
         match first {
             Exp::Function(f) => {
-                let evaulated_args = list.into_iter().map(|x| eval(x)).collect::<Result<LinkedList<Exp>, String>>()?;
+                let evaulated_args = list
+                    .into_iter()
+                    .map(eval)
+                    .collect::<Result<LinkedList<Exp>, String>>()?;
                 f(&evaulated_args)
-            },
+            }
             _ => Err("Error while evaluating".to_owned()),
         }
-    }
-    else {
+    } else {
         Ok(exp)
     }
 }
@@ -218,12 +242,16 @@ fn main() -> Result<(), Box<dyn Error>> {
         print!("> ");
         io::stdout().flush().expect("stdout flush failed");
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("stdin readline failed");
-         
-        let output = tokenize(&input).and_then(|tokens| parse(&tokens)).and_then(|ast| eval(ast));
+        io::stdin()
+            .read_line(&mut input)
+            .expect("stdin readline failed");
+
+        let output = tokenize(&input)
+            .and_then(|tokens| parse(&tokens))
+            .and_then(eval);
         match output {
             Ok(val) => println!("{}", val),
-            _ => println!("Error"),
+            Err(err) => println!("Error: {}", err),
         }
     }
 }
