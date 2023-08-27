@@ -1,5 +1,5 @@
-use core::fmt;
 use crate::list::List;
+use core::fmt;
 
 #[derive(Clone)]
 pub enum Exp {

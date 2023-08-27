@@ -36,7 +36,9 @@ impl<T> List<T> {
     }
 
     pub fn tail(&self) -> Option<Self> {
-        self.head.as_ref().map(|node| List { head: node.next.clone() })
+        self.head.as_ref().map(|node| List {
+            head: node.next.clone(),
+        })
     }
 
     pub fn prepend(&self, elem: T) -> Self {
@@ -48,8 +50,10 @@ impl<T> List<T> {
         }
     }
 
-    pub fn iter<'a>(&'a self) -> Iter<'a, T> {
-        Iter { next: self.head.as_deref() }
+    pub fn iter(&'_ self) -> Iter<'_, T> {
+        Iter {
+            next: self.head.as_deref(),
+        }
     }
 }
 

@@ -1,6 +1,6 @@
 use crate::expression::Exp;
 use crate::lexer::Token;
-use crate::{math, list::List};
+use crate::{list::List, math};
 
 pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
     let first = tokens.first().ok_or("Error while parsing".to_owned())?;
@@ -26,7 +26,9 @@ pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
                 idx += 1;
             }
             match tokens.last() {
-                Some(token) if *token == Token::CloseParen => Ok(Exp::List(List::from_vec(list_vec))),
+                Some(token) if *token == Token::CloseParen => {
+                    Ok(Exp::List(List::from_vec(list_vec)))
+                }
                 _ => Err("Error while parsing".to_owned()),
             }
         }

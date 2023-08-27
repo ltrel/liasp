@@ -1,8 +1,8 @@
 mod expression;
 mod lexer;
+mod list;
 mod math;
 mod parser;
-mod list;
 
 use expression::Exp;
 use lexer::tokenize;
@@ -16,9 +16,7 @@ use std::{
 
 fn eval(exp: &Exp) -> Result<Exp, String> {
     if let Exp::List(list) = exp {
-        let first = list
-            .head()
-            .ok_or("Error while evaluating".to_owned())?;
+        let first = list.head().ok_or("Error while evaluating".to_owned())?;
         match first {
             Exp::Function(f) => {
                 let evaulated_args = list
