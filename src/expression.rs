@@ -1,10 +1,11 @@
 use core::fmt;
-use std::collections::LinkedList;
+use crate::list::List;
 
+#[derive(Clone)]
 pub enum Exp {
     Number(f32),
-    Function(fn(&LinkedList<Exp>) -> Result<Exp, String>),
-    List(LinkedList<Exp>),
+    Function(fn(&List<Exp>) -> Result<Exp, String>),
+    List(List<Exp>),
 }
 
 impl fmt::Debug for Exp {
@@ -33,3 +34,13 @@ impl fmt::Display for Exp {
         }
     }
 }
+
+// impl Clone for Exp {
+//     fn clone(&self) -> Self {
+//         match self {
+//             Self::Number(val) => Self::Number(*val),
+//             Self::Function(f) => Self::Function(*f),
+//             Self::List(list) => Self::List(list.clone()),
+//         }
+//     }
+// }

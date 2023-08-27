@@ -1,8 +1,6 @@
-use std::collections::LinkedList;
-
 use crate::expression::Exp;
 use crate::lexer::Token;
-use crate::math;
+use crate::{math, list::List};
 
 pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
     let first = tokens.first().ok_or("Error while parsing".to_owned())?;
@@ -13,7 +11,7 @@ pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
         Token::Star => Ok(Exp::Function(math::multiply)),
         Token::OpenParen => {
             let mut idx = 1;
-            let mut list = LinkedList::<Exp>::new();
+            let mut list_vec = Vec::<Exp>::new();
             while idx < tokens.len() - 1 {
                 let subslice = if tokens[idx] == Token::OpenParen {
                     let begin = idx;
@@ -24,11 +22,11 @@ pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
                 } else {
                     &tokens[idx..idx + 1]
                 };
-                list.push_back(parse(subslice)?);
+                list_vec.push(parse(subslice)?);
                 idx += 1;
             }
             match tokens.last() {
-                Some(token) if *token == Token::CloseParen => Ok(Exp::List(list)),
+                Some(token) if *token == Token::CloseParen => Ok(Exp::List(List::from_vec(list_vec))),
                 _ => Err("Error while parsing".to_owned()),
             }
         }

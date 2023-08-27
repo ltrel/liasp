@@ -1,8 +1,6 @@
-use std::collections::LinkedList;
+use crate::{expression::Exp, list::List};
 
-use crate::expression::Exp;
-
-pub fn add(args: &LinkedList<Exp>) -> Result<Exp, String> {
+pub fn add(args: &List<Exp>) -> Result<Exp, String> {
     let mut sum = 0.0;
     for arg in args.iter() {
         match arg {
@@ -13,9 +11,9 @@ pub fn add(args: &LinkedList<Exp>) -> Result<Exp, String> {
     Ok(Exp::Number(sum))
 }
 
-pub fn subtract(args: &LinkedList<Exp>) -> Result<Exp, String> {
-    let mut sum = *match args.front() {
-        Some(Exp::Number(val)) => val,
+pub fn subtract(args: &List<Exp>) -> Result<Exp, String> {
+    let mut sum = match args.head() {
+        Some(Exp::Number(val)) => *val,
         _ => return Err("Type error".to_owned()),
     };
     for arg in args.iter().skip(1) {
@@ -27,7 +25,7 @@ pub fn subtract(args: &LinkedList<Exp>) -> Result<Exp, String> {
     Ok(Exp::Number(sum))
 }
 
-pub fn multiply(args: &LinkedList<Exp>) -> Result<Exp, String> {
+pub fn multiply(args: &List<Exp>) -> Result<Exp, String> {
     let mut product = 1.0;
     for arg in args.iter() {
         match arg {
