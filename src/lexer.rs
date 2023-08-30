@@ -6,11 +6,18 @@ use itertools::Itertools;
 pub enum Token {
     OpenParen,
     CloseParen,
-    Plus,
-    Minus,
-    Star,
+    Def,
+    Ident(String),
     Dot,
     Number(f32),
+}
+
+fn is_ident_initial(c: char) -> bool {
+    c.is_ascii_alphabetic() || "+-*/<=>!?:$%_&~^".contains(c)
+}
+
+fn is_ident_subsequent(c: char) -> bool {
+    is_ident_initial(c) || c.is_ascii_digit() || c == '.'
 }
 
 fn tokenize_num(
@@ -50,6 +57,24 @@ fn tokenize_num(
         .map_err(|_| "Number parsing error".to_owned())
 }
 
+fn tokenize_ident_or_reserved(
+    current_char: char,
+    iter: &mut itertools::MultiPeek<Chars>,
+) -> Result<Token, String> {
+    iter.reset_peek();
+    let mut chars = current_char.to_string();
+    chars.push_str(
+        &iter
+            .take_while_ref(|c| is_ident_subsequent(*c))
+            .collect::<String>(),
+    );
+
+    match chars.as_str() {
+        "def" => Ok(Token::Def),
+        _ => Ok(Token::Ident(chars))
+    }
+}
+
 fn consume_whitespace(iter: &mut itertools::MultiPeek<Chars>) -> usize {
     iter.take_while_ref(|c| c.is_whitespace()).count()
 }
@@ -69,21 +94,12 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, String> {
                 consume_whitespace(&mut iter);
                 Some(Token::CloseParen)
             }
-            '+' => Some(Token::Plus),
-            '-' => match iter.peek() {
-                Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('-', &mut iter)?),
-                Some(peeked) if *peeked == '.' => match iter.peek() {
-                    Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('-', &mut iter)?),
-                    _ => Some(Token::Minus),
-                },
-                _ => Some(Token::Minus),
-            },
-            '*' => Some(Token::Star),
             '.' => match iter.peek() {
                 Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('.', &mut iter)?),
                 _ => Some(Token::Dot),
             },
             c if c.is_ascii_digit() => Some(tokenize_num(c, &mut iter)?),
+            c if is_ident_initial(c) => Some(tokenize_ident_or_reserved(c, &mut iter)?),
             _ if c.is_whitespace() => None,
             _ => return Err("Error while tokenizing".to_owned()),
         };

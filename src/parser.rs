@@ -1,14 +1,15 @@
 use crate::expression::Exp;
 use crate::lexer::Token;
-use crate::{list::List, math};
+use crate::special_forms;
+use crate::list::List;
 
 pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
     let first = tokens.first().ok_or("Error while parsing".to_owned())?;
     match first {
         Token::Number(n) => Ok(Exp::Number(*n)),
-        Token::Plus => Ok(Exp::Function(math::add)),
-        Token::Minus => Ok(Exp::Function(math::subtract)),
-        Token::Star => Ok(Exp::Function(math::multiply)),
+        // TODO: refcount the strings instead of cloning
+        Token::Ident(s) => Ok(Exp::Ident(s.clone())),
+        Token::Def => Ok(Exp::SpecialForm(special_forms::def)),
         Token::OpenParen => {
             let mut idx = 1;
             let mut list_vec = Vec::<Exp>::new();
