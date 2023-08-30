@@ -1,9 +1,9 @@
+mod environment;
 mod expression;
 mod lexer;
 mod list;
 mod math;
 mod parser;
-mod environment;
 mod special_forms;
 
 use environment::Environment;
@@ -29,8 +29,12 @@ fn eval(exp: &Exp, env: &mut Environment) -> Result<Exp, String> {
                 .map(|exp| eval(exp, env))
                 .collect::<Result<Vec<Exp>, String>>()
                 .map(List::from_vec)?;
-            let evaluated_first = evaulated_list.head().ok_or("Error while evaluating".to_owned())?;
-            let evaluated_rest = evaulated_list.tail().ok_or("Error while evaluating".to_owned())?;
+            let evaluated_first = evaulated_list
+                .head()
+                .ok_or("Error while evaluating".to_owned())?;
+            let evaluated_rest = evaulated_list
+                .tail()
+                .ok_or("Error while evaluating".to_owned())?;
             match evaluated_first {
                 Exp::Function(f) => f(&evaluated_rest),
                 _ => Err("Error while evaluating".to_owned()),

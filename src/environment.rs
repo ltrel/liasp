@@ -1,9 +1,9 @@
-use std::{collections::HashMap, cell::RefCell, rc::Rc };
+use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
 use crate::{expression::Exp, math};
 
 pub struct Environment {
-    root: EnvLink
+    root: EnvLink,
 }
 
 type EnvLink = Option<Rc<RefCell<EnvNode>>>;
@@ -15,17 +15,29 @@ struct EnvNode {
 
 impl Environment {
     pub fn new() -> Self {
-        let env_node = EnvNode { bindings: HashMap::new(), parent: None };
-        Environment { root: Some(Rc::new(RefCell::new(env_node))) }
+        let env_node = EnvNode {
+            bindings: HashMap::new(),
+            parent: None,
+        };
+        Environment {
+            root: Some(Rc::new(RefCell::new(env_node))),
+        }
     }
 
     pub fn parent(&self) -> Option<Self> {
-        self.root.as_ref().map(|root| Environment { root: root.borrow().parent.clone() })
+        self.root.as_ref().map(|root| Environment {
+            root: root.borrow().parent.clone(),
+        })
     }
 
     pub fn extend(&self) -> Self {
-        let env_node = EnvNode {bindings: HashMap::new(), parent: self.root.clone() };
-        Environment { root: Some(Rc::new(RefCell::new(env_node))) }
+        let env_node = EnvNode {
+            bindings: HashMap::new(),
+            parent: self.root.clone(),
+        };
+        Environment {
+            root: Some(Rc::new(RefCell::new(env_node))),
+        }
     }
 
     pub fn define(&mut self, ident: &str, val: &Exp) -> Result<(), String> {
@@ -40,22 +52,30 @@ impl Environment {
     }
 
     pub fn assign(&mut self, ident: &str, val: &Exp) -> Result<(), String> {
-        let root_link = self.root.as_ref().ok_or("Identifier does not exist in environment".to_owned())?;
+        let root_link = self
+            .root
+            .as_ref()
+            .ok_or("Identifier does not exist in environment".to_owned())?;
         let mut borrow = root_link.borrow_mut();
         if borrow.bindings.contains_key(ident) {
             borrow.bindings.insert(ident.to_owned(), val.clone());
             Ok(())
         } else {
-            let mut parent = self.parent().ok_or("Identifier does not exist in environment".to_owned())?;
+            let mut parent = self
+                .parent()
+                .ok_or("Identifier does not exist in environment".to_owned())?;
             parent.assign(ident, val)
         }
     }
 
     pub fn lookup(&self, ident: &str) -> Option<Exp> {
         self.root.as_ref().and_then(|root_link| {
-            root_link.borrow().bindings.get(ident).cloned().or_else(|| {
-                self.parent().and_then(|parent| parent.lookup(ident))
-            })
+            root_link
+                .borrow()
+                .bindings
+                .get(ident)
+                .cloned()
+                .or_else(|| self.parent().and_then(|parent| parent.lookup(ident)))
         })
     }
 }

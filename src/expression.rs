@@ -1,4 +1,4 @@
-use crate::{list::List, environment::Environment};
+use crate::{environment::Environment, list::List};
 use core::fmt;
 
 #[derive(Clone)]

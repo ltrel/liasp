@@ -71,7 +71,7 @@ fn tokenize_ident_or_reserved(
 
     match chars.as_str() {
         "def" => Ok(Token::Def),
-        _ => Ok(Token::Ident(chars))
+        _ => Ok(Token::Ident(chars)),
     }
 }
 

@@ -1,7 +1,7 @@
 use crate::expression::Exp;
 use crate::lexer::Token;
-use crate::special_forms;
 use crate::list::List;
+use crate::special_forms;
 
 pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
     let first = tokens.first().ok_or("Error while parsing".to_owned())?;
