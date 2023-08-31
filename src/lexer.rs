@@ -7,6 +7,7 @@ pub enum Token {
     OpenParen,
     CloseParen,
     Def,
+    Lambda,
     Ident(String),
     Dot,
     Number(f32),
@@ -71,6 +72,7 @@ fn tokenize_ident_or_reserved(
 
     match chars.as_str() {
         "def" => Ok(Token::Def),
+        "lambda" => Ok(Token::Lambda),
         _ => Ok(Token::Ident(chars)),
     }
 }

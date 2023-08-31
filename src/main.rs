@@ -36,7 +36,7 @@ fn eval(exp: &Exp, env: &mut Environment) -> Result<Exp, String> {
                 .tail()
                 .ok_or("Error while evaluating".to_owned())?;
             match evaluated_first {
-                Exp::Function(f) => f(&evaluated_rest),
+                Exp::Function(f) => f.call(&evaluated_rest),
                 _ => Err("Error while evaluating".to_owned()),
             }
         }
@@ -51,12 +51,13 @@ fn main() -> Result<(), Box<dyn Error>> {
     let mut global_env = environment::build_global_env();
     // let input = "(+(* 2 3)1)";
     // let input = " ( *   (+ -.3  6) 21.7 )  ";
+    // let input = "(lambda (a b) (+ (* 2 a) b))";
     // println!("Input: {}\n", input);
     // let tokens = tokenize(input)?;
     // println!("Token stream: {:?}\n", tokens);
     // let ast = parse(&tokens)?;
     // println!("Parse tree: {:?}", ast);
-    // let res = eval(&ast)?;
+    // let res = eval(&ast, &mut global_env)?;
     // println!("Result: {:?}", res);
 
     // let lst = list::List::new().prepend(3).prepend(2).prepend(1);

@@ -1,12 +1,43 @@
-use crate::{environment::Environment, list::List};
+use crate::{environment::Environment, list::List, eval};
 use core::fmt;
+
+#[derive(Clone)]
+pub struct Lambda {
+    pub closing_env: Environment,
+    pub params: Vec<String>,
+    pub body: Box<Exp>,
+}
+
+#[derive(Clone)]
+pub enum Function {
+    Lambda(Lambda),
+    External(fn(&List<Exp>) -> Result<Exp, String>),
+}
+
+impl Function {
+    pub fn call(&self, args: &List<Exp>) -> Result<Exp, String> {
+        match self {
+            Function::External(f) => f(args),
+            Function::Lambda(lambda) => {
+                let mut evaluation_env = lambda.closing_env.extend();
+                let mut remaining_args = args.clone();
+                for ident in &lambda.params {
+                    let arg = remaining_args.head().ok_or("Missing required argument".to_owned())?;
+                    evaluation_env.define(&ident, arg)?;
+                    remaining_args = remaining_args.tail().expect("List with head but no tail");
+                }
+                eval(&lambda.body, &mut evaluation_env)
+            },
+        }
+    }
+}
 
 #[derive(Clone)]
 pub enum Exp {
     Ident(String),
     Number(f32),
     SpecialForm(fn(&List<Exp>, &mut Environment) -> Result<Exp, String>),
-    Function(fn(&List<Exp>) -> Result<Exp, String>),
+    Function(Function),
     List(List<Exp>),
 }
 

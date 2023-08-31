@@ -1,4 +1,4 @@
-use crate::{expression::Exp, list::List};
+use crate::{expression::Exp, list::List };
 
 pub fn add(args: &List<Exp>) -> Result<Exp, String> {
     let mut sum = 0.0;
