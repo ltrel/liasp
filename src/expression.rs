@@ -1,4 +1,4 @@
-use crate::{environment::Environment, list::List, eval};
+use crate::{environment::Environment, eval, list::List};
 use core::fmt;
 
 #[derive(Clone)]
@@ -22,12 +22,14 @@ impl Function {
                 let mut evaluation_env = lambda.closing_env.extend();
                 let mut remaining_args = args.clone();
                 for ident in &lambda.params {
-                    let arg = remaining_args.head().ok_or("Missing required argument".to_owned())?;
-                    evaluation_env.define(&ident, arg)?;
+                    let arg = remaining_args
+                        .head()
+                        .ok_or("Missing required argument".to_owned())?;
+                    evaluation_env.define(ident, arg)?;
                     remaining_args = remaining_args.tail().expect("List with head but no tail");
                 }
                 eval(&lambda.body, &mut evaluation_env)
-            },
+            }
         }
     }
 }

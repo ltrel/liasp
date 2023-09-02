@@ -1,4 +1,4 @@
-use crate::{expression::Exp, list::List };
+use crate::{expression::Exp, list::List};
 
 pub fn add(args: &List<Exp>) -> Result<Exp, String> {
     let mut sum = 0.0;
@@ -48,5 +48,5 @@ pub fn equals(args: &List<Exp>) -> Result<Exp, String> {
             _ => return Err("Type error".to_owned()),
         }
     }
-    return Ok(Exp::Bool(true));
+    Ok(Exp::Bool(true))
 }

@@ -22,7 +22,10 @@ pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
                     let mut depth = 1;
                     while depth != 0 {
                         idx += 1;
-                        depth += match tokens.get(idx).ok_or("Parse error: unexpected end of file".to_owned())? {
+                        depth += match tokens
+                            .get(idx)
+                            .ok_or("Parse error: unexpected end of file".to_owned())?
+                        {
                             Token::OpenParen => 1,
                             Token::CloseParen => -1,
                             _ => 0,

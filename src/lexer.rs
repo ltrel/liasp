@@ -116,7 +116,7 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, String> {
                 Some('t') => Some(Token::Bool(true)),
                 Some('f') => Some(Token::Bool(false)),
                 _ => return Err("Error while tokenizing".to_owned()),
-            }
+            },
             c if c.is_ascii_digit() => Some(tokenize_num(c, &mut iter)?),
             c if is_ident_initial(c) => Some(tokenize_ident_or_reserved(c, &mut iter)?),
             _ if c.is_whitespace() => None,

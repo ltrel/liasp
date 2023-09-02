@@ -1,6 +1,9 @@
 use std::{cell::RefCell, collections::HashMap, rc::Rc};
 
-use crate::{expression::{Exp, Function}, math};
+use crate::{
+    expression::{Exp, Function},
+    math,
+};
 
 #[derive(Clone)]
 pub struct Environment {
@@ -83,10 +86,14 @@ impl Environment {
 
 pub fn build_global_env() -> Environment {
     let mut env = Environment::new();
-    env.define("+", &Exp::Function(Function::External(math::add))).unwrap();
-    env.define("-", &Exp::Function(Function::External(math::subtract))).unwrap();
-    env.define("*", &Exp::Function(Function::External(math::multiply))).unwrap();
-    env.define("=", &Exp::Function(Function::External(math::equals))).unwrap();
+    env.define("+", &Exp::Function(Function::External(math::add)))
+        .unwrap();
+    env.define("-", &Exp::Function(Function::External(math::subtract)))
+        .unwrap();
+    env.define("*", &Exp::Function(Function::External(math::multiply)))
+        .unwrap();
+    env.define("=", &Exp::Function(Function::External(math::equals)))
+        .unwrap();
     env
 }
 

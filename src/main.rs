@@ -12,12 +12,9 @@ use lexer::tokenize;
 use list::List;
 use parser::parse;
 
-use std::{
-    error::Error,
-    io::{self, Write},
-};
+use std::error::Error;
 
-use rustyline::{DefaultEditor, error::ReadlineError};
+use rustyline::{error::ReadlineError, DefaultEditor};
 
 fn eval(exp: &Exp, env: &mut Environment) -> Result<Exp, String> {
     if let Exp::List(list) = exp {
@@ -87,7 +84,7 @@ fn main() -> Result<(), Box<dyn Error>> {
             }
             Err(_) => {
                 break;
-            },
+            }
         }
     }
     Ok(())
