@@ -17,6 +17,8 @@ use std::{
     io::{self, Write},
 };
 
+use rustyline::{DefaultEditor, error::ReadlineError};
+
 fn eval(exp: &Exp, env: &mut Environment) -> Result<Exp, String> {
     if let Exp::List(list) = exp {
         let first = list.head().ok_or("Error while evaluating".to_owned())?;
@@ -49,8 +51,7 @@ fn eval(exp: &Exp, env: &mut Environment) -> Result<Exp, String> {
 
 fn main() -> Result<(), Box<dyn Error>> {
     let mut global_env = environment::build_global_env();
-    // let input = "(+(* 2 3)1)";
-    // let input = " ( *   (+ -.3  6) 21.7 )  ";
+    // let input = "(+(* 2 3)1)"; // let input = " ( *   (+ -.3  6) 21.7 )  ";
     // let input = "(lambda (a b) (+ (* 2 a) b))";
     // println!("Input: {}\n", input);
     // let tokens = tokenize(input)?;
@@ -67,20 +68,27 @@ fn main() -> Result<(), Box<dyn Error>> {
     // let minus2 = minus1.tail().unwrap();
     // println!("{:?}", minus2.head());
 
+    let mut rl = DefaultEditor::new()?;
     loop {
-        print!("> ");
-        io::stdout().flush().expect("stdout flush failed");
-        let mut input = String::new();
-        io::stdin()
-            .read_line(&mut input)
-            .expect("stdin readline failed");
-
-        let output = tokenize(&input)
-            .and_then(|tokens| parse(&tokens))
-            .and_then(|exp| eval(&exp, &mut global_env));
-        match output {
-            Ok(val) => println!("{}", val),
-            Err(err) => println!("Error: {}", err),
+        let input = rl.readline("> ");
+        match input {
+            Ok(line) => {
+                rl.add_history_entry(&line)?;
+                let output = tokenize(&line)
+                    .and_then(|tokens| parse(&tokens))
+                    .and_then(|exp| eval(&exp, &mut global_env));
+                match output {
+                    Ok(val) => println!("{}", val),
+                    Err(err) => println!("Error: {}", err),
+                }
+            }
+            Err(ReadlineError::Interrupted) => {
+                continue;
+            }
+            Err(_) => {
+                break;
+            },
         }
     }
+    Ok(())
 }
