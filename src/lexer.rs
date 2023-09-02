@@ -103,6 +103,15 @@ pub fn tokenize(text: &str) -> Result<Vec<Token>, String> {
                 Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('.', &mut iter)?),
                 _ => Some(Token::Dot),
             },
+            '-' => match iter.peek() {
+                Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('-', &mut iter)?),
+                Some(peeked) if *peeked == '.' => match iter.peek() {
+                    Some(peeked) if peeked.is_ascii_digit() => Some(tokenize_num('-', &mut iter)?),
+                    _ => return Err("Error while tokenizing".to_owned()),
+                },
+                Some(peeked) if peeked.is_whitespace() => Some(Token::Ident("-".to_owned())),
+                _ => return Err("Error while tokenizing".to_owned()),
+            },
             '#' => match iter.next() {
                 Some('t') => Some(Token::Bool(true)),
                 Some('f') => Some(Token::Bool(false)),
