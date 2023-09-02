@@ -86,7 +86,6 @@ pub fn build_global_env() -> Environment {
     env.define("+", &Exp::Function(Function::External(math::add))).unwrap();
     env.define("-", &Exp::Function(Function::External(math::subtract))).unwrap();
     env.define("*", &Exp::Function(Function::External(math::multiply))).unwrap();
-    env.define("five", &Exp::Number(5.0)).unwrap();
     env
 }
 
