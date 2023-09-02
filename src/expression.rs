@@ -36,15 +36,28 @@ impl Function {
 pub enum Exp {
     Ident(String),
     Number(f32),
+    Bool(bool),
     SpecialForm(fn(&List<Exp>, &mut Environment) -> Result<Exp, String>),
     Function(Function),
     List(List<Exp>),
+}
+
+impl Exp {
+    pub fn is_truthy(&self) -> bool {
+        match self {
+            Exp::Number(x) => *x != 0.0,
+            Exp::Bool(b) => *b,
+            Exp::List(lst) => lst.iter().next().is_some(),
+            _ => true,
+        }
+    }
 }
 
 impl fmt::Debug for Exp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Exp::Number(val) => write!(f, "Number({:?})", val),
+            Exp::Bool(val) => write!(f, "Bool({:?})", val),
             Exp::Ident(val) => write!(f, "Ident({:?})", val),
             Exp::Function(_val) => write!(f, "Function"),
             Exp::SpecialForm(_val) => write!(f, "SpecialForm"),
@@ -57,6 +70,7 @@ impl fmt::Display for Exp {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match self {
             Exp::Number(val) => write!(f, "{}", val),
+            Exp::Bool(val) => write!(f, "#{}", val.to_string().chars().next().unwrap()),
             Exp::Ident(val) => write!(f, "{}", val),
             Exp::Function(_val) => write!(f, "#function#"),
             Exp::SpecialForm(_val) => write!(f, "#specialform#"),

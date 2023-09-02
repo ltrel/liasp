@@ -35,3 +35,18 @@ pub fn multiply(args: &List<Exp>) -> Result<Exp, String> {
     }
     Ok(Exp::Number(product))
 }
+
+pub fn equals(args: &List<Exp>) -> Result<Exp, String> {
+    let first = match args.head().ok_or("Type error".to_owned())? {
+        Exp::Number(val) => val,
+        _ => return Err("Type error".to_owned()),
+    };
+    for arg in args.iter().skip(1) {
+        match arg {
+            Exp::Number(val) if val == first => (),
+            Exp::Number(_) => return Ok(Exp::Bool(false)),
+            _ => return Err("Type error".to_owned()),
+        }
+    }
+    return Ok(Exp::Bool(true));
+}

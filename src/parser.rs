@@ -7,8 +7,10 @@ pub fn parse(tokens: &[Token]) -> Result<Exp, String> {
     let first = tokens.first().ok_or("Parse error: no tokens".to_owned())?;
     match first {
         Token::Number(n) => Ok(Exp::Number(*n)),
+        Token::Bool(b) => Ok(Exp::Bool(*b)),
         // TODO: refcount the strings instead of cloning
         Token::Ident(s) => Ok(Exp::Ident(s.clone())),
+        Token::If => Ok(Exp::SpecialForm(special_forms::if_exp)),
         Token::Def => Ok(Exp::SpecialForm(special_forms::def)),
         Token::Lambda => Ok(Exp::SpecialForm(special_forms::lambda)),
         Token::OpenParen => {

@@ -30,3 +30,16 @@ pub fn lambda(args: &List<Exp>, env: &mut Environment) -> Result<Exp, String> {
     let lambda = Lambda { closing_env, params, body: Box::new(body.clone()) };
     Ok(Exp::Function(Function::Lambda(lambda)))
 }
+
+pub fn if_exp(args: &List<Exp>, env: &mut Environment) -> Result<Exp, String> {
+    let mut args_iter = args.iter();
+    let conditional = args_iter.next().ok_or("Missing conditional".to_owned())?;
+    let then_exp = args_iter.next().ok_or("Missing then clause".to_owned())?;
+    let else_exp = args_iter.next().ok_or("Missing else clause".to_owned())?;
+    
+    if eval(conditional, env)?.is_truthy() {
+        eval(then_exp, env)
+    } else {
+        eval(else_exp, env)
+    }
+}
